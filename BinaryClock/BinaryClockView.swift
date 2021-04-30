@@ -12,11 +12,14 @@ class BinaryClockView: ScreenSaverView {
     
     private let HEIGHT = 4
     private let WIDTH = 6
+    private let 
     var RADIUS: CGFloat = 0
     var DIAMETER: CGFloat = 0
     var DISTANCE: CGFloat = 0
     var screenSize: NSSize = .zero
     var RATIO: CGFloat = 0.5
+    var startPoint: NSPoint = NSMakePoint(0,0)
+    var updated: DispatchTime = DispatchTime.now() - .seconds(60)
     
     // MARK: - Initialization
     override init?(frame: NSRect, isPreview: Bool) {
@@ -35,8 +38,10 @@ class BinaryClockView: ScreenSaverView {
     // MARK: - Lifecycle
     override func draw(_ rect: NSRect) {
         drawBackground(.black)
+        calculateStartPoint(size: screenSize)
         drawClock()
-        drawText()
+//        let string = "x=\(startPoint.x) y=\(startPoint.y)"
+//        Util.printText(string)
     }
 
     override func animateOneFrame() {
@@ -51,7 +56,7 @@ class BinaryClockView: ScreenSaverView {
     }
     
     private func drawClock() {
-        let offset = getOffsetPoint(size: screenSize)
+        let offset = startPoint
         var tempOffset = offset
         let hms = Calendar
             .current
@@ -109,32 +114,15 @@ class BinaryClockView: ScreenSaverView {
         point.fill()
     }
     
-    private func getOffsetPoint(size: NSSize) -> NSPoint {
-        return NSMakePoint(RADIUS, RADIUS)
-    }
-    
-    func drawText() {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .center
-        
-        let font = NSFont(name: "Helvetica", size: 36)
-        let attrs = [NSAttributedString.Key.font: font, NSAttributedString.Key.paragraphStyle: paragraphStyle,
-                     NSAttributedString.Key.foregroundColor: NSColor.white]
-        let date = Date()
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "HH:mm:ss"
-        var string = dateFormatter.string(from: date)
-        let hms = Calendar
-            .current
-            .dateComponents([.hour, .minute, .second], from: date)
-        let h0 = getByte(getComponent(components: hms, 0), 0)
-        let h1 = getByte(getComponent(components: hms, 1), 1)
-        let m0 = getByte(getComponent(components: hms, 2), 2)
-        let m1 = getByte(getComponent(components: hms, 3), 3)
-        let s0 = getByte(getComponent(components: hms, 4), 4)
-        let s1 = getByte(getComponent(components: hms, 5), 5)
-        
-        string += " \(h0) \(h1) \(m0) \(m1) \(s0) \(s1)"
-        string.draw(with: CGRect(x: 32, y: 32, width: 448, height: 448), options: .usesLineFragmentOrigin, attributes: attrs as [NSAttributedString.Key : Any], context: nil)
+    private func calculateStartPoint(size: NSSize) {
+        let seconds = Int.random(in: 10 ... 20)
+        if(updated < DispatchTime.now() - .seconds(seconds)) {
+            let maxX = screenSize.width  - (CGFloat(WIDTH)  * (DIAMETER + RADIUS)) - RADIUS
+            let maxY = screenSize.height - (CGFloat(HEIGHT) * (DIAMETER + RADIUS)) - RADIUS
+            let x = CGFloat.random(in: RADIUS ..< maxX)
+            let y = CGFloat.random(in: RADIUS ..< maxY)
+            startPoint = NSMakePoint(x, y)
+            updated = DispatchTime.now()
+        }
     }
 }
